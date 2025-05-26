@@ -19,6 +19,26 @@ namespace SnaffCore.FileScan
             try
             {
                 FileInfo fileInfo = new FileInfo(file);
+
+                // If DodderHunt mode is enabled, ONLY use DodderClassifier
+                if (MyOptions.DodderHuntMode)
+                {
+                    try
+                    {
+                        DodderClassifier dodderClassifier = new DodderClassifier();
+                        dodderClassifier.ClassifyDodderFile(fileInfo);
+                        // Skip all other classifiers when in DodderHunt mode
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        Mq.Error("Error in DodderHunt mode: " + ex.Message);
+                        Mq.Trace(ex.ToString());
+                        return; // Skip other classifiers even on error
+                    }
+                }
+
+                // Normal Snaffler operation (only if DodderHunt is NOT enabled)
                 // send the file to all the classifiers.
                 foreach (ClassifierRule classifier in MyOptions.FileClassifiers)
                 {

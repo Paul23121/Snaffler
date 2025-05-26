@@ -127,6 +127,11 @@ namespace SnaffCore.Config
         // Content processing options
         public int MatchContextBytes { get; set; } = 200;
 
+        // DodderHunt options for finding persistence candidates
+        public bool DodderHuntMode { get; set; } = false;
+        public int DodderAccessDaysThreshold { get; set; } = 1;
+        public int DodderModifyMonthsThreshold { get; set; } = 0;
+
         public Options()
         {
             //PrepareClassifiers();

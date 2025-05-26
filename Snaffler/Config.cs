@@ -106,7 +106,10 @@ namespace Snaffler
             ValueArgument<string> logType = new ValueArgument<string>('t', "logtype", "Type of log you would like to output. Currently supported options are plain and JSON. Defaults to plain.");
             ValueArgument<string> timeOutArg = new ValueArgument<string>('e', "timeout",
                 "Interval between status updates (in minutes) also acts as a timeout for AD data to be gathered via LDAP. Turn this knob up if you aren't getting any computers from AD when you run Snaffler through a proxy or other slow link. Default = 5");
-            // list of letters i haven't used yet: gnqw
+            SwitchArgument dodderHuntArg = new SwitchArgument('w', "dodderhunt", "Enables DodderHunt mode to find script files accessed recently but modified long ago (potential persistence candidates).", false);
+            ValueArgument<int> dodderAccessDaysArg = new ValueArgument<int>('q', "accessdays", "Number of days within which the file must have been accessed (for DodderHunt mode)");
+            ValueArgument<int> dodderModifyMonthsArg = new ValueArgument<int>('g', "modifymonths", "Number of months since the file must have been modified (for DodderHunt mode)");
+            // list of letters i haven't used yet: n
 
             CommandLineParser.CommandLineParser parser = new CommandLineParser.CommandLineParser();
             parser.Arguments.Add(timeOutArg);
@@ -132,6 +135,9 @@ namespace Snaffler
             parser.Arguments.Add(ruleDirArg);
             parser.Arguments.Add(logType);
             parser.Arguments.Add(compExclusionArg);
+            parser.Arguments.Add(dodderHuntArg);
+            parser.Arguments.Add(dodderAccessDaysArg);
+            parser.Arguments.Add(dodderModifyMonthsArg);
 
             // extra check to handle builtin behaviour from cmd line arg parser
             if ((args.Contains("--help") || args.Contains("/?") || args.Contains("help") || args.Contains("-h") || args.Length == 0))
@@ -348,6 +354,31 @@ namespace Snaffler
                         " bytes of context around matches inside files.");
                 }
 
+                if (dodderHuntArg.Parsed)
+                {
+                    parsedConfig.DodderHuntMode = true;
+                    Mq.Info("Enabled DodderHunt mode to find script files accessed recently but modified long ago.");
+                    Mq.Info("In DodderHunt mode, Snaffler will ONLY look for potential persistence scripts (.cmd, .bat, .ps1, .vbs, .js) and ignore other file types.");
+                }
+
+                if (dodderAccessDaysArg.Parsed)
+                {
+                    parsedConfig.DodderAccessDaysThreshold = dodderAccessDaysArg.Value;
+                    Mq.Degub("Set DodderHunt access threshold to " + parsedConfig.DodderAccessDaysThreshold + " days.");
+                }
+
+                if (dodderModifyMonthsArg.Parsed)
+                {
+                    parsedConfig.DodderModifyMonthsThreshold = dodderModifyMonthsArg.Value;
+                    Mq.Degub("Set DodderHunt modify threshold to " + parsedConfig.DodderModifyMonthsThreshold + " months.");
+                }
+                
+                // Always display the current DodderHunt thresholds if DodderHunt mode is enabled
+                if (parsedConfig.DodderHuntMode)
+                {
+                    Mq.Info($"DodderHunt current threshold settings: Access within {parsedConfig.DodderAccessDaysThreshold} days, Modified more than {parsedConfig.DodderModifyMonthsThreshold} months ago.");
+                }
+
                 // if enabled, grab a copy of files that we like.
                 if (snaffleArg.Parsed)
                 {
@@ -366,8 +397,8 @@ namespace Snaffler
                 {
                     if (configFileArg.Value.Equals("generate"))
                     {
-                        Toml.WriteFile(parsedConfig, ".\\default.toml", settings);
-                        Console.WriteLine("Wrote config values to .\\default.toml");
+                        Toml.WriteFile(parsedConfig, ".\\def.toml", settings);
+                        Console.WriteLine("Wrote config values to .\\def.toml");
                         parsedConfig.LogToConsole = true;
                         Mq.Degub("Enabled logging to stdout.");
                         return null;
