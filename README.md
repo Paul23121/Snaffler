@@ -372,6 +372,45 @@ I am particularly fond of running `Snaffler.exe -s -i C:\` on a freshly compromi
 
 Yet.
 
+
+## DodderHunt Mode - Finding Persistence Opportunities
+
+DodderHunt is a specialized hunting mode that looks for **persistence goldmines** - legitimate script files that are regularly executed but rarely updated. These represent perfect opportunities for attackers to inject malicious code while flying under the radar.
+
+### How DodderHunt Works
+
+Instead of looking for secrets and credentials, DodderHunt mode:
+
+- **Targets executable scripts only**: `.cmd`, `.bat`, `.ps1`, `.vbs`, `.js` files
+- **Analyzes file timestamps** to find scripts that are:
+  - **Recently accessed** (executed within X days)
+  - **Rarely modified** (last changed months ago)
+- **Checks write permissions** to identify which files you can actually modify
+- **Provides detailed timestamp information** for each potential target
+
+### Why This Matters for Red Teams
+
+These files are **persistence goldmines** because:
+- They're already part of legitimate workflows, so execution won't look suspicious  
+- They run with predictable frequency, giving you reliable callback opportunities
+- Modifications often go unnoticed since the files aren't regularly updated
+- They bypass most detection systems that focus on new file creation
+
+### Using DodderHunt Mode
+
+Enable DodderHunt mode with the `-w` flag:
+
+```bash
+# Basic DodderHunt scan
+snaffler.exe -w -s -o dodderhunt.log
+
+# Hunt for scripts accessed in last 3 days, modified more than 6 months ago  
+snaffler.exe -w -q 3 -g 6 -s -o persistence_targets.log
+
+# Target specific directory
+snaffler.exe -w -i "\\server\scripts" -s
+
+
 ## How can I help or get help?
 
 If you want to discuss via Slack you can ping us (@l0ss or @Sh3r4) on the BloodHound Slack, joinable at https://bloodhoundgang.herokuapp.com/, or chat with a group of contributors in the #snaffler channel.
